@@ -11,8 +11,10 @@ Update Scripts to find the latest change to your Attribute.
 ## Warning
 
 Work Draft. Currently nonworking.<br />
-Generally, tampering with EAV Attribute Data is not without risk. We strongly recommend backing up your
-Database regularly and especially before using the Configurator!
+
+Okay, it is working, but the part regarding the migration of Attributes is still a working draft. You may enable the 
+Migration of Attributes in Adminhtml on your own risk. Generally, tampering with EAV Attribute Data is not without 
+risk. We strongly recommend backing up your Database regularly and especially before using the Configurator!
 
 ## Facts
 
