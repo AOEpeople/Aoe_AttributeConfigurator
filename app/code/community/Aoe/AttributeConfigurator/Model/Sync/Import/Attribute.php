@@ -162,7 +162,7 @@ class Aoe_AttributeConfigurator_Model_Sync_Import_Attribute
     /**
      * Decide to upgrade or migrate an attribute and trigger the required methods
      *
-     * @param Mage_Catalog_Model_Entity_Attribute $attribute Attribute to update
+     * @param Mage_Catalog_Model_Entity_Attribute              $attribute       Attribute to update
      * @param Aoe_AttributeConfigurator_Model_Config_Attribute $attributeConfig Attribute config
      * @throws Aoe_AttributeConfigurator_Model_Sync_Import_Attribute_Skipped_Exception
      * @return void
@@ -185,7 +185,7 @@ class Aoe_AttributeConfigurator_Model_Sync_Import_Attribute
     /**
      * Update the data of an existing attribute
      *
-     * @param Mage_Catalog_Model_Entity_Attribute $attribute Attribute to update
+     * @param Mage_Catalog_Model_Entity_Attribute              $attribute       Attribute to update
      * @param Aoe_AttributeConfigurator_Model_Config_Attribute $attributeConfig Attribute config
      * @throws Aoe_AttributeConfigurator_Model_Sync_Import_Attribute_Skipped_Exception
      * @return void
@@ -197,8 +197,6 @@ class Aoe_AttributeConfigurator_Model_Sync_Import_Attribute
                 sprintf('Migration/Updating deactivated: Attribute \'%s\' not modified.', $attributeConfig->getCode())
             );
         }
-        sprintf('Attribute \'%s\' left unmodified - Attribute migration implementation not production safe.', $attributeConfig->getCode());
-        // TODO: Check implementation for (mostly) safe execution as this can potentially destroy data
 
         // Compute Differences between existing settings and incoming settings
         $attributeDiff = $this->_getAttributeDiff($attribute, $attributeConfig);
@@ -206,17 +204,19 @@ class Aoe_AttributeConfigurator_Model_Sync_Import_Attribute
         // Remove Fixed Properties = can not be changed
         $attributeDiff = array_diff($attributeDiff, $this->_fixedProps);
 
-        // Update Changeable Settings
-        $this->_changeableAttributeUpdate($attribute, $attributeConfig, $attributeDiff);
+        if (count($attributeDiff) > 0 ) {
+            // Update Changeable Settings
+            $this->_changeableAttributeUpdate($attribute, $attributeConfig, $attributeDiff);
 
-        // Update Settings that need migration methods
-        $this->_migratableAttributeUpdate($attribute, $attributeConfig, $attributeDiff);
+            // Update Settings that need migration methods
+            $this->_migratableAttributeUpdate($attribute, $attributeConfig, $attributeDiff);
+        }
     }
 
     /**
      * Create a new (managed) attribute
      *
-     * @param Mage_Catalog_Model_Entity_Attribute $attribute Attribute to update
+     * @param Mage_Catalog_Model_Entity_Attribute              $attribute       Attribute to update
      * @param Aoe_AttributeConfigurator_Model_Config_Attribute $attributeConfig Attribute config
      * @return void
      * @throws Aoe_AttributeConfigurator_Model_Sync_Import_Attribute_Exception
@@ -270,8 +270,8 @@ class Aoe_AttributeConfigurator_Model_Sync_Import_Attribute
     /**
      * Update attribute set and attribute group config
      *
-     * @param Aoe_AttributeConfigurator_Model_Config_Attribute $attributeConfig Attribute config
-     * @param Aoe_AttributeConfigurator_Model_Config_Attribute_Attributeset $attributeSet Attributeset to use
+     * @param Aoe_AttributeConfigurator_Model_Config_Attribute              $attributeConfig Attribute config
+     * @param Aoe_AttributeConfigurator_Model_Config_Attribute_Attributeset $attributeSet    Attributeset to use
      * @throws Aoe_AttributeConfigurator_Model_Sync_Import_Exception
      * @return void
      */
@@ -307,7 +307,7 @@ class Aoe_AttributeConfigurator_Model_Sync_Import_Attribute
             ->addFieldToFilter('entity_type_id', $attributeConfig->getEntityTypeId())
             ->getFirstItem();
         // Attribute Set ID - we will need this later
-        $attributeSetId = (int)$attributeSetModel->getData('attribute_set_id');
+        $attributeSetId = (int) $attributeSetModel->getData('attribute_set_id');
 
         if (!$attributeSetId) {
             throw new Aoe_AttributeConfigurator_Model_Sync_Import_Exception(
@@ -320,7 +320,7 @@ class Aoe_AttributeConfigurator_Model_Sync_Import_Attribute
 
         // TODO: we need real update (also remove if the attribute config has changed)
         // Most likely only one, fetch all
-        $attributeGroups = (array)$attributeSet->getAttributeGroups();
+        $attributeGroups = (array) $attributeSet->getAttributeGroups();
 
         // Iterate through Attribute Groups
         foreach ($attributeGroups as $group) {
@@ -350,13 +350,14 @@ class Aoe_AttributeConfigurator_Model_Sync_Import_Attribute
     /**
      * @param Mage_Catalog_Model_Entity_Attribute              $attribute       Attribute to update
      * @param Aoe_AttributeConfigurator_Model_Config_Attribute $attributeConfig Attribute config
-     * @param array $attributeDiff
+     * @param array                                            $attributeDiff   Diff of Changes
+     * @return void
      */
     protected function _migratableAttributeUpdate($attribute, $attributeConfig, $attributeDiff)
     {
-        foreach($this->_migratableProps as $prop) {
-            // Only act if this is a changed setting#
-            if(in_array($prop, $attributeDiff)) {
+        foreach ($this->_migratableProps as $prop) {
+            // Only act if this is a changed setting
+            if (in_array($prop, $attributeDiff)) {
                 switch ($prop) {
                     case 'backend_type':
                         $backendType = $attributeConfig->getSettingsAsArray()['backend_type'];
@@ -417,7 +418,7 @@ class Aoe_AttributeConfigurator_Model_Sync_Import_Attribute
             $backendType,
             $frontendInput
         );
-        if($newFrontendInput) {
+        if ($newFrontendInput) {
             $frontendInput = $newFrontendInput;
         }
 
@@ -459,8 +460,8 @@ EOS;
      *
      * TODO: Delete existing Select/Multiselect Values if the new Backend Type is not one of Select/Multiselect
      *
-     * @param Mage_Eav_Model_Entity_Attribute $attribute Attribute Model
-     * @param string $targetType Target Backend Type
+     * @param Mage_Eav_Model_Entity_Attribute $attribute  Attribute Model
+     * @param string                          $targetType Target Backend Type
      * @return void
      */
     protected function _migrateData($attribute, $targetType)
@@ -505,6 +506,9 @@ EOS;
      */
     protected function _migrateSelect($attribute, $targetType, $targetInputType)
     {
+        $this->_getHelper()->log(sprintf('Migration of Select Types currently not finished'));
+        return;
+
         $selectTypes = ['select', 'multiselect'];
         $sourceType = $attribute->getBackendType();
         $sourceInputType = $attribute->getData('frontend_input');
@@ -517,7 +521,7 @@ EOS;
         $tableProductEntityMultiselect = $this->getTable('catalog_product_entity_varchar');
         $tableProductEntitySelect = $this->getTable('catalog_product_entity_int');
 
-        if(in_array($sourceInputType, $selectTypes) && in_array($targetInputType, $selectTypes)) {
+        if (in_array($sourceInputType, $selectTypes) && in_array($targetInputType, $selectTypes)) {
             // Everything is SelectType
             /**
              * Convert Multiselect to Select
@@ -603,7 +607,7 @@ EOS;
      *
      * TODO : Fetch Field Type and Length Definition from Database Entity Tables
      *
-     * @param mixed $value Current Value
+     * @param mixed  $value      Current Value
      * @param string $sourceType Current Source Type
      * @param string $targetType New Source Type
      * @return null
@@ -615,25 +619,25 @@ EOS;
         }
         switch ($targetType) {
             case 'decimal':
-                return min((int)$value, 2147483648);
+                return min((int) $value, 2147483648);
             case 'gallery':
-                return $this->truncateString((string)$value, 254);
+                return $this->truncateString((string) $value, 254);
             case 'group_price':
-                return min((int)$value, 65535);
+                return min((int) $value, 65535);
             case 'int':
-                return min((int)$value, 2147483648);
+                return min((int) $value, 2147483648);
             case 'media_gallery':
-                return $this->truncateString((string)$value, 254);
+                return $this->truncateString((string) $value, 254);
             case 'media_gallery_value':
-                return min((int)$value, 65535);
+                return min((int) $value, 65535);
             case 'text':
-                return (string)$value;
+                return (string) $value;
             case 'tier_price':
-                return min((int)$value, 65535);
+                return min((int) $value, 65535);
             case 'url_key':
-                return $this->truncateString((string)$value, 254);
+                return $this->truncateString((string )$value, 254);
             case 'varchar':
-                return $this->truncateString((string)$value, 254);
+                return $this->truncateString((string) $value, 254);
             case 'datetime':
                 return null;
             case 'static':
@@ -646,7 +650,7 @@ EOS;
     /**
      * Truncate string if too long
      *
-     * @param  string $str Input String
+     * @param  string  $str    Input String
      * @param  integer $maxlen Maximum String Length
      * @return string
      */
@@ -713,7 +717,7 @@ EOS;
     /**
      * Create Diff Data between incoming Attribute and existing Attribute Data
      *
-     * @param Mage_Catalog_Model_Entity_Attribute $attribute Attribute to update
+     * @param Mage_Catalog_Model_Entity_Attribute              $attribute       Attribute to update
      * @param Aoe_AttributeConfigurator_Model_Config_Attribute $attributeConfig Attribute config
      * @return array
      */
@@ -741,9 +745,9 @@ EOS;
     /**
      * Update changeable properties of a managed attribute
      *
-     * @param Mage_Catalog_Model_Entity_Attribute $attribute Attribute to update
+     * @param Mage_Catalog_Model_Entity_Attribute              $attribute       Attribute to update
      * @param Aoe_AttributeConfigurator_Model_Config_Attribute $attributeConfig Attribute config
-     * @param array $attributeDiff Attributes to be updated
+     * @param array                                            $attributeDiff   Attributes to be updated
      * @return void
      * @throws Aoe_AttributeConfigurator_Model_Sync_Import_Attribute_Exception
      */
@@ -757,8 +761,14 @@ EOS;
                     if ($this->_validateProperty($property, $attributeSetting[$property])) {
                         $attribute->setData($property, $attributeSetting[$property]);
                     } else {
-                        $this->_getHelper()->log(sprintf('Property \'%s\' of Attribute \'%s\' skipped: \'%s\' is no valid value.',
-                            $property, $attributeConfig->getCode(), $attributeSetting[$property]));
+                        $this->_getHelper()->log(
+                            sprintf(
+                                'Property \'%s\' of Attribute \'%s\' skipped: \'%s\' is no valid value.',
+                                $property,
+                                $attributeConfig->getCode(),
+                                $attributeSetting[$property]
+                            )
+                        );
                     }
                 }
             }
@@ -784,8 +794,8 @@ EOS;
      */
     protected function _validateProperty($property, $value)
     {
-        if(in_array($property, $this->_booleanValidation)) {
-            if(in_array($value, array('0', '1'))) {
+        if (in_array($property, $this->_booleanValidation)) {
+            if (in_array($value, ['0', '1'])) {
                 return true;
             } else {
                 return false;
@@ -831,10 +841,10 @@ EOS;
      * @param string                      $targetTable   Target Entity Table
      * @param Varien_Db_Adapter_Interface $_dbConnection Database Connection
      * @param string                      $sourceTable   Source Entity Table
+     * @return void
      */
-    protected function _migrateNonSelect($targetType, $sourceQuery, $sourceType,
-        $targetTable, $_dbConnection, $sourceTable
-    ) {
+    protected function _migrateNonSelect($targetType, $sourceQuery, $sourceType, $targetTable, $_dbConnection, $sourceTable)
+    {
         while ($row = $sourceQuery->fetch()) {
             $currentValue = $row['value'];
             if (!is_null($currentValue)) {
