@@ -52,7 +52,7 @@
                     <frontend_class></frontend_class>
                     <source_model></source_model>
                     <is_required></is_required>
-                    <is_userdefined></is_userdefined>
+                    <is_user_defined></is_user_defined>
                     <default_value></default_value>
                     <is_unique></is_unique>
                     <note></note>
