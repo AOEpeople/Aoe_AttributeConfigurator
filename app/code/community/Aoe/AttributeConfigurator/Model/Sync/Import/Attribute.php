@@ -40,8 +40,7 @@ class Aoe_AttributeConfigurator_Model_Sync_Import_Attribute
     protected $_changeableProps = [
         'is_required',
         'is_user_defined',
-        'note',
-        'frontend_label'
+        'note'
     ];
 
     /** @var array Attribute Properties boolean validation */
@@ -385,6 +384,9 @@ class Aoe_AttributeConfigurator_Model_Sync_Import_Attribute
                         break;
                     case 'frontend_input':
                         $this->_getHelper()->log(sprintf('Skipping Migration of setting %s for attribute %s, can\'t be set independent of backend_type.', $prop, $attribute->getName()));
+                        break;
+                    case 'frontend_label':
+                        $this->_getHelper()->log(sprintf('Skipping Migration of setting %s for attribute %s, not implemented', $prop, $attribute->getName()));
                         break;
                     case 'frontend_class':
                         $this->_getHelper()->log(sprintf('Skipping Migration of setting %s for attribute %s, not implemented', $prop, $attribute->getName()));
