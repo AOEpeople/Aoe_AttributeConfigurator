@@ -40,6 +40,7 @@ class Aoe_AttributeConfigurator_Model_Sync_Import_Attribute
     protected $_changeableProps = [
         'is_required',
         'is_user_defined',
+        'is_searchable',
         'note'
     ];
 
@@ -63,9 +64,9 @@ class Aoe_AttributeConfigurator_Model_Sync_Import_Attribute
 
     /** @var array Possible Frontend Input Types for different Backend Types, first value is the preferred */
     protected $_frontendMappping = [
-        'varchar' => ['text', 'textarea', 'multiselect'],
+        'varchar' => ['text', 'textarea', 'select', 'multiselect'],
         'datetime' => ['date'],
-        'int' => ['text', 'select', 'hidden'],
+        'int' => ['text', 'select', 'boolean', 'hidden'],
         'text' => ['textarea', 'text', 'multiline'],
         'decimal' => ['text', 'price', 'weight']
     ];
