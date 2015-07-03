@@ -86,7 +86,7 @@ class Aoe_AttributeConfigurator_Test_Model_Config extends EcomDev_PHPUnit_Test_C
      * @test
      * @depends checkClass
      * @expectedException Aoe_AttributeConfigurator_Model_Exception
-     * @expectedExceptionMessageRegExp /unable to load xml file '.*checkLoadBrokenXml.xml'/
+     * @expectedExceptionMessageRegExp /unable to (parse|load) xml file '.*checkLoadBrokenXml.xml'/
      * @param Aoe_AttributeConfigurator_Model_Config $model Config model
      * @return void
      */
