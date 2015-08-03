@@ -20,7 +20,7 @@ class Aoe_AttributeConfigurator_Helper_Config extends Mage_Core_Helper_Abstract
     /**
      * Build Import Filename from Store Config
      *
-     * @param Mage_Core_Model_Store|int|null $store Store reference for configuration
+     * @param Mage_Core_Model_Store|int|string|null $store Store reference for configuration
      * @return string
      */
     public function getImportFilename($store = null)
@@ -31,20 +31,20 @@ class Aoe_AttributeConfigurator_Helper_Config extends Mage_Core_Helper_Abstract
     /**
      * Get full path to import file
      *
-     * @param Mage_Core_Model_Store|int|null $store Store reference for configuration
+     * @param Mage_Core_Model_Store|int|string|null $store Store reference for configuration
      * @return string
      */
     public function getImportFilePath($store = null)
     {
         $filename = $this->getImportFilename($store);
 
-        return Mage::getBaseDir('var') . DS . $filename;
+        return Mage::getBaseDir() . DS . $filename;
     }
 
     /**
      * Get Migration Flag
      *
-     * @param Mage_Core_Model_Store|int|null $store Store reference for configuration
+     * @param Mage_Core_Model_Store|int|string|null $store Store reference for configuration
      * @return string
      */
     public function getMigrateFlag($store = null)
@@ -55,7 +55,7 @@ class Aoe_AttributeConfigurator_Helper_Config extends Mage_Core_Helper_Abstract
     /**
      * Get Array with Attribute Codes that should be skipped
      *
-     * @param Mage_Core_Model_Store|int|null $store Store reference for configuration
+     * @param Mage_Core_Model_Store|int|string|null $store Store reference for configuration
      * @return array
      */
     public function getSkipAttributeCodes($store = null)
@@ -85,9 +85,12 @@ class Aoe_AttributeConfigurator_Helper_Config extends Mage_Core_Helper_Abstract
         }
 
         // @codingStandardsIgnoreStart
-        $fileExists = file_exists($xmlLocation);
+        if (!file_exists($xmlLocation)) {
+            return false;
+        }
         // @codingStandardsIgnoreEnd
-        if (!$fileExists) {
+
+        if (!is_file($xmlLocation)) {
             return false;
         }
 
