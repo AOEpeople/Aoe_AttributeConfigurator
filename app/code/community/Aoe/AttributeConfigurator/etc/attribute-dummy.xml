@@ -23,6 +23,11 @@
         <attributes>
             <attribute code="hersteller">
                 <!-- This is Data for a single <attribute> -->
+                <!-- List of labels per locale - the localized labels are added to the storelabels of the attribute -->
+                <labels>
+                    <en_US>en_US Attribute Label</en_US>
+                    <de_DE>de_DE Attribute Label</de_DE>
+                </labels>
                 <!-- <values> can only be used for <frontend_input>select</frontend_input> -->
                 <values>
                     <pair>

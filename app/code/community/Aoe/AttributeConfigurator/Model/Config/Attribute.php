@@ -33,6 +33,13 @@ class Aoe_AttributeConfigurator_Model_Config_Attribute extends Aoe_AttributeConf
     protected $_attributeSets;
 
     /**
+     * Lazy labels array
+     *
+     * @var
+     */
+    protected $_labels;
+
+    /**
      * @return string
      */
     public function getCode()
@@ -132,6 +139,53 @@ class Aoe_AttributeConfigurator_Model_Config_Attribute extends Aoe_AttributeConf
         $this->_attributeSets = $result;
 
         return $result;
+    }
+
+    /**
+     * Get a label for a locale. Returns null if no label is available for $locale
+     *
+     * @param string $locale Locale code
+     *
+     * @return null|string
+     */
+    public function getLabel($locale)
+    {
+        $labels = $this->getLabels();
+
+        return (isset($labels[$locale]))
+            ? $labels[$locale]
+            : null;
+    }
+
+    /**
+     * Get all labels of the attributes
+     *
+     * @return string[] with 'locale' => 'label'
+     */
+    public function getLabels()
+    {
+        if (isset($this->_labels)) {
+            return $this->_labels;
+        }
+
+        $labelsNode = $this->_xmlElement->{'labels'};
+        $labels = [];
+        if ($labelsNode->count() > 0) {
+            foreach ($labelsNode->children() as $labelNode) {
+                /** @var SimpleXmlElement $labelNode */
+                $locale = $labelNode->getName();
+                if (Zend_Locale::isAlias($locale)) {
+                    $locale = Zend_Locale::getAlias($locale);
+                }
+
+                $label = (string) $labelNode;
+
+                $labels[$locale] = $label;
+            }
+        }
+
+        $this->_labels = $labels;
+        return $labels;
     }
 
     /**

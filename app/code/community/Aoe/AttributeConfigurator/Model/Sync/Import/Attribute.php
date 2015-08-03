@@ -212,6 +212,9 @@ class Aoe_AttributeConfigurator_Model_Sync_Import_Attribute
             // Update Settings that need migration methods
             $this->_migratableAttributeUpdate($attribute, $attributeConfig, $attributeDiff);
         }
+
+        // finally update the labels of the attribute
+        $this->_updateAttributeLabels($attribute, $attributeConfig);
     }
 
     /**
@@ -883,6 +886,41 @@ EOS;
                 ' FROM ' . $sourceTable . ' WHERE value_id = ?';
             $_dbConnection->query($sql, $row['value_id']);
         }
+    }
+
+    /**
+     * Update the frontend labels of the attribute
+     *
+     * @param Mage_Catalog_Model_Entity_Attribute              $attribute       Attribute to update
+     * @param Aoe_AttributeConfigurator_Model_Config_Attribute $attributeConfig Attribute config
+     *
+     * @return void
+     */
+    protected function _updateAttributeLabels($attribute, $attributeConfig)
+    {
+        $stores = Mage::app()->getStores(true);
+        $storeLabels = [];
+        $frontendLabel = $attribute->getAttributeCode();
+        foreach ($stores as $store) {
+            /** @var Mage_Core_Model_Store $store */
+
+            $storeLocale = Mage::getStoreConfig('general/locale/code', $store);
+            $storeLabel = $attributeConfig->getLabel($storeLocale);
+            if (!$storeLabel) {
+                continue;
+            }
+
+            $storeLabels[$store->getId()] = $storeLabel;
+
+            if (0 == $store->getId()) {
+                $frontendLabel = $storeLabel;
+            }
+        }
+
+        $attribute
+            ->setFrontendLabel($frontendLabel)
+            ->setStoreLabels($storeLabels);
+        $attribute->save();
     }
 }
 
