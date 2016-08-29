@@ -15,7 +15,8 @@
  */
 class Aoe_AttributeConfigurator_Model_Shell extends Mage_Core_Model_Abstract
 {
-    const PARAM_RUN_ALL = 'runAll';
+    const PARAM_RUN_ALL     = 'runAll',
+          PARAM_IMPORT_FILE = 'importFile';
 
     /**
      * Init Shell Settings
@@ -38,9 +39,25 @@ class Aoe_AttributeConfigurator_Model_Shell extends Mage_Core_Model_Abstract
      */
     public function validate($shell)
     {
-        $config = $this->_checkConfig();
-        if (!$config) {
-            $this->exitConfigurator($this->_configError());
+        $importFile = $shell->getArg(self::PARAM_IMPORT_FILE);
+        if ($importFile) {
+            $importFileCheck = $this->_checkImportFilePath($importFile);
+            if ($importFileCheck) {
+                // set the import file on the config helper
+                $this->_getConfigHelper()->setImportFilePath(realpath($importFile));
+            } else {
+                $this->exitConfigurator(
+                    sprintf(
+                        'Unable to access import file \'%s\'',
+                        $importFile
+                    )
+                );
+            }
+        } else {
+            $config = $this->_checkConfig();
+            if (!$config) {
+                $this->exitConfigurator($this->_configError());
+            }
         }
 
         $install = $this->_checkInstall();
@@ -56,6 +73,7 @@ class Aoe_AttributeConfigurator_Model_Shell extends Mage_Core_Model_Abstract
 
         if ($runAll) {
             $this->_runAll();
+
             return;
         }
         $this->exitConfigurator($this->_usageHelp());
@@ -77,15 +95,28 @@ class Aoe_AttributeConfigurator_Model_Shell extends Mage_Core_Model_Abstract
     /**
      * Check if System Setting is correct
      *
-     * @return string
+     * @return bool
      */
     protected function _checkConfig()
     {
-        /** @var Aoe_AttributeConfigurator_Helper_Config $helper */
-        $helper = Mage::helper('aoe_attributeconfigurator/config');
-        $configFilePath = $helper->getImportFilePath();
+        return $this->_checkImportFilePath($this->_getConfigHelper()->getImportFilePath());
+    }
 
-        return $helper->checkFile($configFilePath);
+    /**
+     * @param string $importFilePath Import file path
+     * @return bool
+     */
+    protected function _checkImportFilePath($importFilePath)
+    {
+        return $this->_getConfigHelper()->checkFile($importFilePath);
+    }
+
+    /**
+     * @return Aoe_AttributeConfigurator_Helper_Config
+     */
+    protected function _getConfigHelper()
+    {
+        return Mage::helper('aoe_attributeconfigurator/config');
     }
 
     /**
@@ -139,6 +170,7 @@ Usage:  php aoe_attributeconfigurator.php -- <options>
 
   Options:
   --runAll                                      Run complete Import
+  --importFile <filepath>                       Optional: Path to import file as override to configuration
   help                                          This help
 
 USAGE;

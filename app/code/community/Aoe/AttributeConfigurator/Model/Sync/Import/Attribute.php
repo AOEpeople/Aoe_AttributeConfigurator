@@ -41,13 +41,13 @@ class Aoe_AttributeConfigurator_Model_Sync_Import_Attribute
         'is_required',
         'is_user_defined',
         'is_searchable',
-        'note'
+        'note',
     ];
 
     /** @var array Attribute Properties boolean validation */
     protected $_booleanValidation = [
         'is_required',
-        'is_user_defined'
+        'is_user_defined',
     ];
 
     /** @var array Attribute Properties that need to be migrated if changed */
@@ -59,16 +59,16 @@ class Aoe_AttributeConfigurator_Model_Sync_Import_Attribute
         'frontend_label',
         'frontend_class',
         'source_model',
-        'default_value'
+        'default_value',
     ];
 
     /** @var array Possible Frontend Input Types for different Backend Types, first value is the preferred */
     protected $_frontendMappping = [
-        'varchar' => ['text', 'textarea', 'select', 'multiselect'],
+        'varchar'  => ['text', 'textarea', 'select', 'multiselect'],
         'datetime' => ['date'],
-        'int' => ['text', 'select', 'boolean', 'hidden'],
-        'text' => ['textarea', 'text', 'multiline'],
-        'decimal' => ['text', 'price', 'weight']
+        'int'      => ['text', 'select', 'boolean', 'hidden'],
+        'text'     => ['textarea', 'text', 'multiline'],
+        'decimal'  => ['text', 'price', 'weight'],
     ];
 
     /**
@@ -126,8 +126,11 @@ class Aoe_AttributeConfigurator_Model_Sync_Import_Attribute
     {
         if (!$attributeConfig->validate()) {
             throw new Aoe_AttributeConfigurator_Model_Sync_Import_Attribute_Validation_Exception(
-                'Validation errors on attribute: \n'
-                . implode('\n', $attributeConfig->getValidationMessages())
+                sprintf(
+                    'Validation errors on attribute \'%s\': %s',
+                    $attributeConfig->getCode(),
+                    implode('\n', $attributeConfig->getValidationMessages())
+                    )
             );
         }
 
@@ -390,7 +393,7 @@ class Aoe_AttributeConfigurator_Model_Sync_Import_Attribute
                         $this->_getHelper()->log(sprintf('Skipping Migration of setting %s for attribute %s, can\'t be set independent of backend_type.', $prop, $attribute->getName()));
                         break;
                     case 'frontend_label':
-                        $this->_getHelper()->log(sprintf('Skipping Migration of setting %s for attribute %s, not implemented', $prop, $attribute->getName()));
+                        $this->_updateAttributeLabels($attribute, $attributeConfig);
                         break;
                     case 'frontend_class':
                         $this->_getHelper()->log(sprintf('Skipping Migration of setting %s for attribute %s, not implemented', $prop, $attribute->getName()));
@@ -512,98 +515,98 @@ EOS;
     {
         $this->_getHelper()->log(sprintf('Migration of Select Types currently not finished'));
         return;
-
-        $selectTypes = ['select', 'multiselect'];
-        $sourceType = $attribute->getBackendType();
-        $sourceInputType = $attribute->getData('frontend_input');
-
-        /** @var Varien_Db_Adapter_Interface $_dbConnection */
-        $_dbConnection = Mage::getSingleton('core/resource')->getConnection('core_write');
-
-        $tableOptions = $this->getTable('eav_attribute_option');
-        $tableOptionValues = $this->getTable('eav_attribute_option_value');
-        $tableProductEntityMultiselect = $this->getTable('catalog_product_entity_varchar');
-        $tableProductEntitySelect = $this->getTable('catalog_product_entity_int');
-
-        if (in_array($sourceInputType, $selectTypes) && in_array($targetInputType, $selectTypes)) {
-            // Everything is SelectType
-            /**
-             * Convert Multiselect to Select
-             * Note: Select to Multiselect is not necessary, same Backend Type, just able to save more values
-             */
-            $sql = 'SELECT' .
-                ' * FROM ' . $tableOptions . ' WHERE attribute_id = ?';
-            $query = $_dbConnection->query(
-                $sql,
-                [
-                    $attribute->getId()
-                ]
-            );
-            $optionIds = [];
-            $count = 0;
-            $optionIdKeep = null;
-            while ($row = $query->fetch()) {
-                if ($count == 0) {
-                    $optionIdKeep = $row['option_id'];
-                    // Skip First, keeping one option for the Select
-                    continue;
-                }
-                array_push($optionIds, $row['option_id']);
-            }
-
-            // Delete Options
-            $options = $attribute->getSource()->getAllOptions();
-            foreach ($optionIds as $optionId) {
-                $options['delete'][$optionId] = true;
-                $options['value'][$optionId] = true;
-            }
-            /** @var Mage_Eav_Model_Entity_Setup $setup */
-            $setup = Mage::getModel('eav/entity_setup', ['core_setup']);
-            $setup->addAttributeOption($options);
-
-            // Fetch Valid Attribute Option Value Ids
-            $sql = 'SELECT' .
-                ' * FROM ' . $tableOptionValues . ' WHERE option_id = ?';
-            $query = $_dbConnection->query(
-                $sql,
-                [
-                    $optionIdKeep
-                ]
-            );
-            $validValueIds = [];
-            while ($row = $query->fetch()) {
-                // Push all existing value ids to array
-                array_push($validValueIds, $row['value_id']);
-            }
-
-
-            // TODO: Not done, value needs exploding and removing single values
-            // Delete any Entity Records pointing to nonexisting Options
-            $sql = 'DELETE' .
-                ' FROM ' . $tableProductEntityMultiselect . ' WHERE entity_type_id = ? AND attribute_id = ? AND value NOT IN (?)';
-            $query = $_dbConnection->query(
-                $sql,
-                [
-                    $this->_getEntityTypeId(),
-                    $attribute->getId(),
-                    implode(',', $validValueIds)
-                ]
-            );
-        }
-
-        if(in_array($sourceInputType, $selectTypes)) {
-            // Source is SelectType
-            /**
-             * Convert From Select to 'flat' Entity
-             */
-        }
-
-        if(in_array($targetInputType, $selectTypes)) {
-            // Target is SelectType
-            /**
-             * Convert from 'flat' Entity to Select/Multiselect
-             */
-        }
+//
+//        $selectTypes = ['select', 'multiselect'];
+//        $sourceType = $attribute->getBackendType();
+//        $sourceInputType = $attribute->getData('frontend_input');
+//
+//        /** @var Varien_Db_Adapter_Interface $_dbConnection */
+//        $_dbConnection = Mage::getSingleton('core/resource')->getConnection('core_write');
+//
+//        $tableOptions = $this->getTable('eav_attribute_option');
+//        $tableOptionValues = $this->getTable('eav_attribute_option_value');
+//        $tableProductEntityMultiselect = $this->getTable('catalog_product_entity_varchar');
+//        $tableProductEntitySelect = $this->getTable('catalog_product_entity_int');
+//
+//        if (in_array($sourceInputType, $selectTypes) && in_array($targetInputType, $selectTypes)) {
+//            // Everything is SelectType
+//            /**
+//             * Convert Multiselect to Select
+//             * Note: Select to Multiselect is not necessary, same Backend Type, just able to save more values
+//             */
+//            $sql = 'SELECT' .
+//                ' * FROM ' . $tableOptions . ' WHERE attribute_id = ?';
+//            $query = $_dbConnection->query(
+//                $sql,
+//                [
+//                    $attribute->getId()
+//                ]
+//            );
+//            $optionIds = [];
+//            $count = 0;
+//            $optionIdKeep = null;
+//            while ($row = $query->fetch()) {
+//                if ($count == 0) {
+//                    $optionIdKeep = $row['option_id'];
+//                    // Skip First, keeping one option for the Select
+//                    continue;
+//                }
+//                array_push($optionIds, $row['option_id']);
+//            }
+//
+//            // Delete Options
+//            $options = $attribute->getSource()->getAllOptions();
+//            foreach ($optionIds as $optionId) {
+//                $options['delete'][$optionId] = true;
+//                $options['value'][$optionId] = true;
+//            }
+//            /** @var Mage_Eav_Model_Entity_Setup $setup */
+//            $setup = Mage::getModel('eav/entity_setup', ['core_setup']);
+//            $setup->addAttributeOption($options);
+//
+//            // Fetch Valid Attribute Option Value Ids
+//            $sql = 'SELECT' .
+//                ' * FROM ' . $tableOptionValues . ' WHERE option_id = ?';
+//            $query = $_dbConnection->query(
+//                $sql,
+//                [
+//                    $optionIdKeep
+//                ]
+//            );
+//            $validValueIds = [];
+//            while ($row = $query->fetch()) {
+//                // Push all existing value ids to array
+//                array_push($validValueIds, $row['value_id']);
+//            }
+//
+//
+//            // TODO: Not done, value needs exploding and removing single values
+//            // Delete any Entity Records pointing to nonexisting Options
+//            $sql = 'DELETE' .
+//                ' FROM ' . $tableProductEntityMultiselect . ' WHERE entity_type_id = ? AND attribute_id = ? AND value NOT IN (?)';
+//            $query = $_dbConnection->query(
+//                $sql,
+//                [
+//                    $this->_getEntityTypeId(),
+//                    $attribute->getId(),
+//                    implode(',', $validValueIds)
+//                ]
+//            );
+//        }
+//
+//        if(in_array($sourceInputType, $selectTypes)) {
+//            // Source is SelectType
+//            /**
+//             * Convert From Select to 'flat' Entity
+//             */
+//        }
+//
+//        if(in_array($targetInputType, $selectTypes)) {
+//            // Target is SelectType
+//            /**
+//             * Convert from 'flat' Entity to Select/Multiselect
+//             */
+//        }
     }
 
     /**

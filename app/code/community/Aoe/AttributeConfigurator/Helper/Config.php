@@ -18,6 +18,11 @@ class Aoe_AttributeConfigurator_Helper_Config extends Mage_Core_Helper_Abstract
     const XML_CONFIG_BASE = 'catalog/attribute_configurator/';
 
     /**
+     * @var string
+     */
+    protected $_importFilePath;
+
+    /**
      * Build Import Filename from Store Config
      *
      * @param Mage_Core_Model_Store|int|string|null $store Store reference for configuration
@@ -36,9 +41,28 @@ class Aoe_AttributeConfigurator_Helper_Config extends Mage_Core_Helper_Abstract
      */
     public function getImportFilePath($store = null)
     {
-        $filename = $this->getImportFilename($store);
+        if (isset($this->_importFilePath)) {
+            return $this->_importFilePath;
+        }
 
-        return Mage::getBaseDir() . DS . $filename;
+        $filename = $this->getImportFilename($store);
+        $result = Mage::getBaseDir() . DS . $filename;
+
+        $this->_importFilePath = $result;
+
+        return $result;
+    }
+
+    /**
+     * Set the import file path to override configuration
+     * @param string $importFilePath Import file path
+     * @return $this
+     */
+    public function setImportFilePath($importFilePath)
+    {
+        $this->_importFilePath = $importFilePath;
+
+        return $this;
     }
 
     /**
