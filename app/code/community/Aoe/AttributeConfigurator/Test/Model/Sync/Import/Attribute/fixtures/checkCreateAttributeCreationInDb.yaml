@@ -1,0 +1,4 @@
+config:
+  default/catalog/attribute_configurator/skip_attribute_codes: |
+    test_attribute_to_skip
+    test_prefix_to_skip*

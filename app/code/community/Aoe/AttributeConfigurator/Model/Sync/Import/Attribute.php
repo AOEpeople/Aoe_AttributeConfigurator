@@ -130,7 +130,7 @@ class Aoe_AttributeConfigurator_Model_Sync_Import_Attribute
                     'Validation errors on attribute \'%s\': %s',
                     $attributeConfig->getCode(),
                     implode('\n', $attributeConfig->getValidationMessages())
-                    )
+                )
             );
         }
 
@@ -156,8 +156,13 @@ class Aoe_AttributeConfigurator_Model_Sync_Import_Attribute
      */
     protected function _checkSkipAttribute($code)
     {
-        if (in_array($code, $this->_attributesToSkip)) {
-            return false;
+        foreach ($this->_attributesToSkip as $skip) {
+            if ($code == $skip) {
+                return false;
+            }
+            if (substr($skip, -1) === '*' && stripos($code, substr($skip, 0, -1)) === 0) {
+                return false;
+            }
         }
 
         return true;

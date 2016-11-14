@@ -38,6 +38,22 @@ abstract class Aoe_AttributeConfigurator_Test_Model_Case extends EcomDev_PHPUnit
     }
 
     /**
+     * Get a path to a common model fixture file
+     *
+     * @param string $fixture Fixture filename
+     * @return string
+     */
+    protected function _getSpecificFixturePath($fixture = 'test_attributes.xml')
+    {
+        $class = str_replace('Aoe_AttributeConfigurator_', '', get_class($this));
+        $path = explode('_', $class);
+        array_unshift($path, Mage::getModuleDir('', 'Aoe_AttributeConfigurator'));
+        array_push($path, 'fixtures', $fixture);
+
+        return implode(DS, $path);
+    }
+
+    /**
      * Mock the modules config helper and use a fixture xml for testing.
      * The mocked helper is also replaced using replaceByMock
      *
@@ -52,6 +68,9 @@ abstract class Aoe_AttributeConfigurator_Test_Model_Case extends EcomDev_PHPUnit
         );
 
         $filePath = $this->_getCommonFixturePath($fixture);
+        if (!file_exists($filePath)) {
+            $filePath = $this->_getSpecificFixturePath($fixture);
+        }
 
         $mockedHelper->expects($this->any())
             ->method('getImportFilePath')

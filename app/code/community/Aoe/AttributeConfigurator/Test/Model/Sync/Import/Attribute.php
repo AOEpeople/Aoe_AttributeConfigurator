@@ -14,6 +14,66 @@
 class Aoe_AttributeConfigurator_Test_Model_Sync_Import_Attribute extends Aoe_AttributeConfigurator_Test_Model_Case
 {
     /**
+     * @var array set => array of groups
+     */
+    private $_attributeSets = [
+        'Gitarren & Saiteninstrumente' => [
+            'One',
+            'Two',
+            'Three',
+            'Four',
+        ],
+        'Flöten/Blechbläser' => [
+            'One',
+            'Two',
+            'Salsa',
+            'Lambada',
+        ],
+    ];
+
+    /**
+     * Set Up Attribute Sets
+     */
+    public function setUp()
+    {
+        parent::setUp();
+        $entityTypeId = Mage::getModel('catalog/product')
+            ->getResource()
+            ->getEntityType()
+            ->getId();
+
+        foreach ($this->_attributeSets as $name => $groups) {
+            /** @var Mage_Eav_Model_Entity_Attribute_Set $attributeSet */
+            $attributeSet = Mage::getModel('eav/entity_attribute_set')
+                ->setEntityTypeId($entityTypeId)
+                ->setAttributeSetName($name);
+
+            $attributeSet->save();
+
+            foreach ($groups as $group) {
+                $modelGroup = Mage::getModel('eav/entity_attribute_group');
+                $modelGroup->setAttributeGroupName($group)->setAttributeSetId($attributeSet->getId());
+                $modelGroup->save();
+            }
+        }
+    }
+
+    /**
+     * Delete Attribute Sets
+     */
+    public function tearDown()
+    {
+        /** @var Mage_Eav_Model_Entity_Attribute_Set $attributeSet */
+        $attributeSet = Mage::getModel('eav/entity_attribute_set');
+        /** @var Mage_Eav_Model_Resource_Entity_Attribute_Set_Collection $setCollection */
+        $setCollection = $attributeSet->getCollection();
+        $setCollection->addFieldToFilter('attribute_set_name', ['in' => array_keys($this->_attributeSets)]);
+        $setCollection->walk(function (Mage_Eav_Model_Entity_Attribute_Set $item) {$item->delete();});
+
+        parent::tearDown();
+    }
+
+    /**
      * @test
      * @return Aoe_AttributeConfigurator_Model_Sync_Import_Attribute
      */
@@ -82,22 +142,18 @@ class Aoe_AttributeConfigurator_Test_Model_Sync_Import_Attribute extends Aoe_Att
 
     /**
      * @test
-     * @dataProvider dataProvider
-     * @param string   $label          Data provider label
-     * @param string[] $attributeCodes Data provider attribute codes
+     * @loadFixture
      * @return void
      */
-    public function checkCreateAttributeCreationInDb($label, $attributeCodes)
+    public function checkCreateAttributeCreationInDb()
     {
-        $this->assertNotEmpty(
-            $attributeCodes,
-            'provided attribute codes are empty - stopping to prevent test db breaks'
-        );
+        $attributeCodes = $this->expected('data')->getAttributes();
+
         // cleanup before this test
         $this->_removeAttributes($attributeCodes);
 
         // mock test xml loading
-        $this->_mockConfigHelperLoadingXml();
+        $this->_mockConfigHelperLoadingXml(__FUNCTION__ . '.xml');
 
         // run the attribute import on the model
         /** @var Aoe_AttributeConfigurator_Model_Sync_Import_Attribute $importModel */
@@ -109,13 +165,21 @@ class Aoe_AttributeConfigurator_Test_Model_Sync_Import_Attribute extends Aoe_Att
         $importModel->run($configModel);
 
         // check expectations
-        $expected = $this->expected($label);
-        $expectedAttributeCode = $expected['attributes'];
-        $createdAttributes = $this->_fetchAttributes($expectedAttributeCode);
-        $this->assertEquals(
-            count($expectedAttributeCode),
-            $createdAttributes->getSize(),
-            'all expected attributes are created in the system'
+        $createdAttributes = $this->_fetchAttributes($attributeCodes);
+
+        /** @var Mage_Eav_Model_Entity_Attribute $attribute */
+        foreach ($createdAttributes as $attribute) {
+            $this->assertContains(
+                $attribute->getAttributeCode(),
+                $this->expected('data')->getCreated(),
+                $attribute->getAttributeCode() . ' was not expected to be created.'
+            );
+        }
+
+        $this->assertCount(
+            count($this->expected('data')->getCreated()),
+            $createdAttributes,
+            'Not all expected attributes have been created.'
         );
 
         // cleanup possible post test attributes

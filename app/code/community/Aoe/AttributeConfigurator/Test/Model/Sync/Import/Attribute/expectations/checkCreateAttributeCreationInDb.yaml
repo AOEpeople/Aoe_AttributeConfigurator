@@ -1,2 +1,11 @@
-generated:
-  attributes: [test_attribute_one, test_attribute_two]
+data:
+  attributes:
+    - test_attribute_one
+    - test_attribute_two
+    - test_attribute_to_skip
+    - test_prefix_to_skip_attribute
+    - attr_test_prefix_to_skip_attr
+  created:
+    - test_attribute_one
+    - test_attribute_two
+    - attr_test_prefix_to_skip_attr
