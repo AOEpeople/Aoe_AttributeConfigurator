@@ -201,6 +201,9 @@ class Aoe_AttributeConfigurator_Model_Sync_Import_Attribute
      */
     protected function _updateAttribute($attribute, $attributeConfig)
     {
+        // first update the labels of the attribute in every case
+        $this->_updateAttributeLabels($attribute, $attributeConfig);
+
         if (!$this->_getHelper()->checkMigrationActivated()) {
             throw new Aoe_AttributeConfigurator_Model_Sync_Import_Attribute_Skipped_Exception(
                 sprintf('Migration/Updating deactivated: Attribute \'%s\' not modified.', $attributeConfig->getCode())
@@ -220,9 +223,6 @@ class Aoe_AttributeConfigurator_Model_Sync_Import_Attribute
             // Update Settings that need migration methods
             $this->_migratableAttributeUpdate($attribute, $attributeConfig, $attributeDiff);
         }
-
-        // finally update the labels of the attribute
-        $this->_updateAttributeLabels($attribute, $attributeConfig);
     }
 
     /**
